@@ -6,24 +6,23 @@ public class PlayerController : MonoBehaviour
 {
     int planeIndicator = 0;
 
-    float speed = 4.0f;
+    float speed = 10.0f;
     float planeAabsLimits = 10.0f;
-    float planeBasLimits = 5.0f;
+    float planeBabsLimits = 5.0f;
 
-    float boundaryLimit = 10.0f;
-    float jumpForce = 8.0f;
-    float moveForce = 8.0f;
-    float gravityModifier = 1.2f;
+    float relzLimit;
+    float relxLimit;
 
-     Rigidbody playerRb;
-
-    float initYPos = 5;
-    float nextYPos;
+    float gravityModifier = 2.0f;
+    bool isGrounded = true;
+    Rigidbody playerRb;
 
     // Start is called before the first frame update
     void Start()
     {
+        playerRb = GetComponent<Rigidbody>();
 
+        Physics.gravity *= gravityModifier;
     }
 
     // Update is called once per frame
@@ -32,53 +31,123 @@ public class PlayerController : MonoBehaviour
         float horizontalInput = Input.GetAxis("Horizontal");
         float verticalInput = Input.GetAxis("Vertical");
 
-        if(planeIndicator == 0)
+        //Detect Player in planeA
+        if (planeIndicator == 0)
         {
+            //Boundary limits
             relzLimit = planeAabsLimits;
             relxLimit = planeAabsLimits;
+
+            //Boundary limits for planeA Z-Axis
+            if (transform.position.z > relzLimit)
+            {
+                if (transform.position.x > -relzLimit / 2 && transform.position.x < relxLimit / 2)
+                {
+                    transform.Translate(Vector3.forward * verticalInput * speed * Time.deltaTime);
+                }
+                else
+                {
+                    transform.position = new Vector3(transform.position.x, transform.position.y, relzLimit);
+                }
+            }
+            else if (transform.position.z < -relzLimit)
+            {
+                transform.position = new Vector3(transform.position.x, transform.position.y, -relzLimit);
+            }
+            else
+            {
+                transform.Translate(Vector3.forward * verticalInput * speed * Time.deltaTime);
+            }
+
+            //Boundary limits for planeA X-Axis
+            if (transform.position.x > relxLimit)
+            {
+                transform.position = new Vector3(relxLimit, transform.position.y, transform.position.z);
+            }
+            else if (transform.position.x < -relxLimit)
+            {
+                transform.position = new Vector3(-relxLimit, transform.position.y, transform.position.z);
+            }
+            else
+            {
+                transform.Translate(Vector3.right * horizontalInput * speed * Time.deltaTime);
+            }
         }
 
-        if (transform.position.z < -boundaryLimit)
-        {
-            transform.position = new Vector3(transform.position.x, transform.position.y, -boundaryLimit);
-        }
-        else if (transform.position.z > boundaryLimit)
-        {
-            transform.position = new Vector3(transform.position.x, transform.position.y, boundaryLimit);
-        }
+        //Detect player in planeB
         else
         {
-            transform.Translate(Vector3.forward * Time.deltaTime * moveForce * verticalInput);
-        }
+            relzLimit = planeAabsLimits + 2 * planeBabsLimits;
+            relxLimit = planeBabsLimits;
 
-        if (transform.position.x < -boundaryLimit)
-        {
-            transform.position = new Vector3(-boundaryLimit, transform.position.y, transform.position.z);
-        }
-        else if (transform.position.x > boundaryLimit)
-        {
-            transform.position = new Vector3(boundaryLimit, transform.position.y, transform.position.z);
-        }
-        else
-        {
-            transform.Translate(Vector3.right * Time.deltaTime * moveForce * horizontalInput);
-        }
+            if (transform.position.z < planeAabsLimits)
+            {
+                if (transform.position.x > -planeAabsLimits / 2 && transform.position.x < planeAabsLimits / 2)
+                {
+                    transform.Translate(Vector3.forward * verticalInput * speed * Time.deltaTime);
+                }
+                else
+                {
+                    transform.position = new Vector3(transform.position.x, transform.position.y, planeAabsLimits);
+                }
+            
+            }
+            else if (transform.position.z > relzLimit)
+            {
+                transform.position = new Vector3(transform.position.x, transform.position.y, relzLimit);
+            }
+            else
+            {
+                transform.Translate(Vector3.forward * verticalInput * speed * Time.deltaTime);
+            }
 
-        jumpPlayer();
+            if (transform.position.x > relxLimit)
+            {
+                transform.position = new Vector3(relxLimit, transform.position.y, transform.position.z);
+            }
+            else if (transform.position.x < -relxLimit)
+            {
+                transform.position = new Vector3(-relxLimit, transform.position.y, transform.position.z);
+            }
+            else
+            {
+                transform.Translate(Vector3.right * horizontalInput * speed * Time.deltaTime);
+            }
+
+            //make player jump
+            if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+            {
+                playerRb.AddForce(Vector3.up * 10, ForceMode.Impulse);
+            }
+        }
     }
-    private void jumpPlayer()
+    private void OnCollisionEnter(Collision collision)
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        isGrounded = true;
+
+        if (collision.gameObject.CompareTag("PlaneA"))
         {
-            playerRb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        }
-        private void OnCollisionEnter(Collision collision)
-        {
-            if(collision.gameObject.CompareTag("PlaneA"))
+            Debug.Log("In Plane A");
+            planeIndicator = 0;
         }
 
+        if (collision.gameObject.CompareTag("PlaneB"))
+        {
+            Debug.Log("In Plane B");
+            planeIndicator = 1;
+        }
+    }
+    private void OnCollisionExit(Collision collision)
+    {
+        isGrounded = false;
     }
 }
-    
+
+
+
+
+
+
+
 
 
