@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController21 : MonoBehaviour
 {
     int planeIndicator = 0;
 
